@@ -21,7 +21,31 @@ class _CartTileState extends State<CartTile> {
     return Dismissible(
       key: ValueKey(widget.id),
       direction: DismissDirection.endToStart,
-      onDismissed: (direction){
+      confirmDismiss: (direction) {
+        return showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('Are you sure?'),
+            content: Text(
+                'Are you sure you want to remove this item from the cart?'),
+            actions: [
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                },
+                child: Text('NO'),
+              ),
+              FlatButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(true);
+                },
+                child: Text('YES'),
+              )
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
         Provider.of<Cart>(context, listen: false).removeItem(widget.productId);
       },
       background: Container(
@@ -46,15 +70,25 @@ class _CartTileState extends State<CartTile> {
             title: Text(widget.title),
             subtitle: Text('Total: \$${(widget.price * widget.quantity)}'),
             trailing: FittedBox(
-                          child: Row(
+              child: Row(
                 children: [
-                  IconButton(icon: Icon(Icons.remove, size: 20,), onPressed: (){
-                    Provider.of<Cart>(context).subQuantity(widget.id);
-                  }),
+                  IconButton(
+                      icon: Icon(
+                        Icons.remove,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        Provider.of<Cart>(context).subQuantity(widget.id);
+                      }),
                   Text('${widget.quantity}'),
-                  IconButton(icon: Icon(Icons.add, size: 20,), onPressed: (){
-                    Provider.of<Cart>(context).addQuantity(widget.id);
-                  })
+                  IconButton(
+                      icon: Icon(
+                        Icons.add,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        Provider.of<Cart>(context).addQuantity(widget.id);
+                      })
                 ],
               ),
             ),
