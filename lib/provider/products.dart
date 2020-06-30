@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import './product.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../models/http_exception.dart';
 
 class Products with ChangeNotifier {
   List<Product> _items = [
-    Product(
+    /* Product(
       id: 'p1',
       title: 'Red Shirt',
       description: 'A red shirt - it is pretty red!',
@@ -34,7 +37,7 @@ class Products with ChangeNotifier {
       price: 49.99,
       imageUrl:
           'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
-    ),
+    ), */
   ];
 
   List<Product> get favorites {
@@ -45,28 +48,93 @@ class Products with ChangeNotifier {
     return [..._items];
   }
 
-  void addProduct(Product product) {
-    final newProduct = Product(
-        id: DateTime.now().toString(),
-        description: product.description,
-        imageUrl: product.imageUrl,
-        price: product.price,
-        title: product.title);
-    _items.add(newProduct);
-    notifyListeners();
+  Future<void> fetchandSetProducts() async {
+    const url = 'https://myshop-d4cd0.firebaseio.com/products.json';
+    try {
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      final List<Product> loadedProducts = [];
+      extractedData.forEach((prodId, prodData) {
+        loadedProducts.add(
+          Product(
+              id: prodId,
+              description: prodData['description'],
+              price: prodData['price'],
+              title: prodData['title'],
+              isFavorite: prodData['isFavorite'],
+              imageUrl: prodData['imageUrl']),
+        );
+      });
+
+      _items = loadedProducts;
+      notifyListeners();
+      print(json.decode(response.body));
+    } catch (e) {
+      print(e);
+      throw (e);
+    }
   }
 
-  void updateProduct(String id, Product newProduct){
+  Future<void> addProduct(Product product) async {
+    const url = 'https://myshop-d4cd0.firebaseio.com/products.json';
+    try {
+      final response = await http.post(
+        url,
+        body: json.encode(
+          {
+            'title': product.title,
+            'description': product.description,
+            'price': product.price,
+            'imageUrl': product.imageUrl,
+            'isFavorite': product.isFavorite,
+          },
+        ),
+      );
+      final newProduct = Product(
+          id: json.decode(response.body)['name'],
+          description: product.description,
+          imageUrl: product.imageUrl,
+          price: product.price,
+          title: product.title);
+      _items.add(newProduct);
+      notifyListeners();
+    } catch (error) {
+      print(error);
+      throw error;
+    }
+  }
+
+  Future<void> updateProduct(String id, Product newProduct) async {
     final prodIndex = _items.indexWhere((element) => element.id == id);
-    if(prodIndex >= 0){
-    _items[prodIndex] = newProduct;
-    notifyListeners();} else{
+    if (prodIndex >= 0) {
+      final url = 'https://myshop-d4cd0.firebaseio.com/products/$id.json';
+      await http.patch(url,
+          body: json.encode({
+            'title': newProduct.title,
+            'price': newProduct.price,
+            'description': newProduct.description,
+            'imageUrl': newProduct.imageUrl,
+          }));
+      _items[prodIndex] = newProduct;
+      notifyListeners();
+    } else {
       print('...');
     }
   }
 
-  void deleteProduct(String id){
-    _items.removeWhere((element) => element.id == id);
+  Future<void> deleteProduct(String id) async {
+    final url = 'https://myshop-d4cd0.firebaseio.com/products/$id.json';
+    final existingProductIndex =
+        _items.indexWhere((element) => element.id == id);
+    var existingProduct = _items[existingProductIndex];
+    _items.removeAt(existingProductIndex);
     notifyListeners();
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      _items.insert(existingProductIndex, existingProduct);
+      notifyListeners();
+      throw HttpException('Could not delete Project!');
+    }
+    existingProduct = null;
   }
 }
