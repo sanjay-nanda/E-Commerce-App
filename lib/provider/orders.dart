@@ -19,38 +19,67 @@ class Order with ChangeNotifier {
     return [..._orders];
   }
 
+  Future<void> fetchAndSetProducts() async {
+    const url = 'https://myshop-d4cd0.firebaseio.com/orders.json';
+    final response = await http.get(url);
+    final extractedData = json.decode(response.body) as Map<String, dynamic>;
+    final List<OrderItem> loadedOrders = [];
+    if(extractedData == null){
+      return;
+    }
+    extractedData.forEach((orderId, orderValue) {
+      loadedOrders.add(OrderItem(
+        id: orderId,
+        amount: orderValue['amount'],
+        dateTime: DateTime.parse(orderValue['dateTime']),
+        products: (orderValue['products'] as List<dynamic>)
+            .map(
+              (item) => CartItem(
+                id: item['id'],
+                title: item['title'],
+                quantity: item['quantity'],
+                price: item['price'],
+              ),
+            )
+            .toList(),
+      ));
+    _orders = loadedOrders.reversed.toList();
+    notifyListeners();
+    });
+  }
+
   Future<void> addOrder(List<CartItem> cartProducts, double total) async {
     const url = 'https://myshop-d4cd0.firebaseio.com/orders.json';
     final timeStamp = DateTime.now();
-      try {
-        final response = await http.post(
-          url,
-          body: json.encode(
-            {
-              'amount': total,
-              'dateTime': timeStamp.toIso8601String(),
-              'products': cartProducts
-                  .map(
-                    (e) => {
-                      'id': e.id,
-                      'title' : e.title,
-                      'quantity': e.quantity,
-                      'price': e.price  
-                    },
-                  )
-                  .toList(),
-            },
-          ),
-        );
-        _orders.insert(
-          0,
-          OrderItem(
-              id: json.decode(response.body)['name'],
-              amount: total,
-              products: cartProducts,
-              dateTime: timeStamp),
-        );
-      } catch (e) {}
-      notifyListeners();
+    try {
+      final response = await http.post(
+        url,
+        body: json.encode(
+          {
+            'amount': total,
+            'dateTime': timeStamp.toIso8601String(),
+            'products': cartProducts
+                .map(
+                  (e) => {
+                    'id': e.id,
+                    'title': e.title,
+                    'quantity': e.quantity,
+                    'price': e.price
+                  },
+                )
+                .toList(),
+          },
+        ),
+      );
+      _orders.insert(
+        0,
+        OrderItem(
+            id: json.decode(response.body)['name'],
+            amount: total,
+            products: cartProducts,
+            dateTime: timeStamp),
+      );
+    } catch (e) {}
+    notifyListeners();
   }
 }

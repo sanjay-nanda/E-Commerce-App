@@ -1,3 +1,6 @@
+import 'package:Shopify/provider/auth.dart';
+
+import './screens/auth_screen.dart';
 import './screens/edit_products_Screen.dart';
 import './screens/user_products_screen.dart';
 import './screens/orders_screen.dart';
@@ -20,6 +23,9 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
+          create: (ctx) => Auth(),
+        ),
+        ChangeNotifierProvider(
           create: (ctx) => Products(),
         ),
         ChangeNotifierProvider(
@@ -36,9 +42,9 @@ class MyApp extends StatelessWidget {
             primaryColor: Colors.purple,
             accentColor: Colors.deepOrange,
             fontFamily: 'Lato'),
-        initialRoute: '/',
+        home: AuthScreen(),
         routes: {
-          '/': (ctx) => ProductOverviewScreen(),
+          '/2': (ctx) => ProductOverviewScreen(),
           ProductDetailsScreen.routeName: (ctx) => ProductDetailsScreen(),
           CartScreen.routeName: (ctx) => CartScreen(),
           OrdersScreen.routeName: (ctx) => OrdersScreen(),

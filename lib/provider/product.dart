@@ -34,7 +34,7 @@ class Product with ChangeNotifier {
       if (respone.statusCode >= 400) {
         isFavorite = status;
         notifyListeners();
-      }
+      } 
     } catch (e) {
       isFavorite = status;
       notifyListeners();

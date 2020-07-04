@@ -88,7 +88,7 @@ class _OrderButtonState extends State<OrderButton> {
               });
               widget.cart.clearCart();
             },
-      child: Text(
+      child: _isLoading ? CircularProgressIndicator() : Text(
         'ORDER NOW',
         style: TextStyle(color: Theme.of(context).primaryColor),
       ),
