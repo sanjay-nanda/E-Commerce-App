@@ -61,7 +61,7 @@ class AuthScreen extends StatelessWidget {
                       child: Text(
                         'MyShop',
                         style: TextStyle(
-                          color: Theme.of(context).accentTextTheme.title.color,
+                          color: Theme.of(context).accentTextTheme.headline1.color,
                           fontSize: 50,
                           fontFamily: 'Anton',
                           fontWeight: FontWeight.normal,
@@ -142,7 +142,7 @@ class _AuthCardState extends State<AuthCard> {
       if (error.toString().contains('EMAIL_EXISTS')) {
         errorMessage = 'Email address already registered!';
       } else if (error.toString().contains('INVALID_EMAIL')) {
-        errorMessage = 'Invalid Email try another';
+        errorMessage = 'Invalid Email try another \nTry removing whitespaces!';
       } else if (error.toString().contains('WEAK_PASSWORD')) {
         errorMessage = 'Password too weak!';
       } else if (error.toString().contains('EMAIL_NOT_FOUND')) {

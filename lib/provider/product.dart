@@ -8,6 +8,7 @@ class Product with ChangeNotifier {
   final String description;
   final double price;
   final String imageUrl;
+  final String creatorId;
   bool isFavorite;
 
   Product({
@@ -16,19 +17,20 @@ class Product with ChangeNotifier {
     @required this.imageUrl,
     @required this.price,
     @required this.title,
+    @required this.creatorId,
     this.isFavorite = false,
   });
 
-  Future<void> toggleFavorite() async {
+  Future<void> toggleFavorite(String authToken, String userId) async {
     final status = isFavorite;
     isFavorite = !isFavorite;
     notifyListeners();
-    final url = 'https://myshop-d4cd0.firebaseio.com/products/$id.json';
+    final url = 'https://myshop-d4cd0.firebaseio.com/userFavorites/$userId/$id.json?auth=$authToken';
     try {
-      final respone = await http.patch(
+      final respone = await http.put(
         url,
         body: json.encode(
-          {'isFavorite': isFavorite},
+          isFavorite
         ),
       );
       if (respone.statusCode >= 400) {
