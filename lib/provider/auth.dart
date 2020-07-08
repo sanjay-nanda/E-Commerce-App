@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/http_exception.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Auth with ChangeNotifier {
   String _token;
@@ -37,6 +38,13 @@ class Auth with ChangeNotifier {
       );
       autoLogout();
       notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      final userData = json.encode({
+        'userId': _userId,
+        'token': _token,
+        'expiryDate': _expiryDate.toIso8601String(),
+      });
+      prefs.setString('userData', userData);
     } catch (e) {
       throw e;
     }
@@ -63,11 +71,32 @@ class Auth with ChangeNotifier {
     return _authenticate(email, password, 'signUp');
   }
 
+  Future<bool> tryAutoLogin() async{
+    final prefs = await SharedPreferences.getInstance();
+    if(!prefs.containsKey('userData'))
+    {
+      return false;
+    }
+    final userData = json.decode(prefs.getString('userData')) as Map<String, Object>;
+    final expiryDate = DateTime.parse(userData['expiryDate']);
+
+    if(expiryDate.isBefore(DateTime.now())){
+      return false;
+    }
+
+    _token = userData['token'];
+    _userId = userData['userId'];
+    _expiryDate = expiryDate;
+    notifyListeners();
+    autoLogout();
+    return true;
+  }
+
   Future<void> loginUser(String email, String password) async {
     return _authenticate(email, password, 'signInWithPassword');
   }
 
-  void logout() {
+  void logout() async{
     _token = null;
     _userId = null;
     _expiryDate = null;
@@ -76,6 +105,8 @@ class Auth with ChangeNotifier {
       authTimer = null;
     }
 
+    final prefs = await SharedPreferences.getInstance();
+    prefs.clear(); 
     notifyListeners();
   }
 
@@ -83,6 +114,7 @@ class Auth with ChangeNotifier {
     if (authTimer != null) {
       authTimer.cancel();
     }
+
 
     final timeToExpiry = _expiryDate.difference(DateTime.now()).inSeconds;
     authTimer = Timer(Duration(seconds: timeToExpiry), logout);
